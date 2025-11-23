@@ -16,7 +16,7 @@ function App() {
   const [status, setStatus] = useState("");
   const [lastTxHash, setLastTxHash] = useState("");
 
-  // NEW: lock UI state
+  // Lock UI state
   const [lockDurationValue, setLockDurationValue] = useState("");
   const [lockDurationUnit, setLockDurationUnit] = useState("minutes"); 
 
@@ -128,7 +128,7 @@ function App() {
     }
   };
 
-  // ---- NEW: Write: extend lock ----
+  // ---- Write: extend lock ----
   const handleExtendLock = async (e) => {
     e.preventDefault();
     try {
@@ -220,123 +220,343 @@ function App() {
   const formattedUnlockTime =
     unlockTime > 0 ? new Date(unlockTime * 1000).toLocaleString() : "—";
 
+  // Simple reusable card style
+  const cardStyle = {
+    backgroundColor: "#ffffff",
+    borderRadius: "12px",
+    padding: "1.25rem",
+    marginBottom: "1.5rem",
+    boxShadow: "0 8px 20px rgba(0,0,0,0.05)",
+    border: "1px solid #edf2f7",
+  };
+
+  const labelStyle = { display: "block", marginBottom: "0.25rem", fontWeight: 500 };
+
+  const inputStyle = {
+    padding: "0.5rem 0.75rem",
+    borderRadius: "8px",
+    border: "1px solid #cbd5e0",
+    marginRight: "0.5rem",
+    minWidth: "0",
+  };
+
+  const buttonPrimary = {
+    padding: "0.5rem 0.9rem",
+    borderRadius: "8px",
+    border: "none",
+    background: "#2563eb",
+    color: "#fff",
+    fontWeight: 600,
+    cursor: "pointer",
+  };
+
+  const buttonSecondary = {
+    ...buttonPrimary,
+    background: "#4b5563",
+  };
+
   return (
     <div
       style={{
-        maxWidth: "600px",
-        margin: "0 auto",
-        padding: "1.5rem",
-        fontFamily: "sans-serif",
+        minHeight: "100vh",
+        margin: 0,
+        padding: "2rem 1rem",
+        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        background: "linear-gradient(135deg, #0f172a, #020617)",
+        color: "#0f172a",
       }}
     >
-      <h1>Time-Locked Savings Wallet</h1>
-
-      {/* Connect Wallet */}
-      <section style={{ marginBottom: "1.5rem" }}>
-        <button onClick={connectWallet}>Connect Wallet</button>
-        <div style={{ marginTop: "0.5rem" }}>
-          <p>
-            <strong>Wallet:</strong> {walletAddress || "Not connected"}
-          </p>
-          <p>
-            <strong>Network:</strong> {network || "Unknown"}
-          </p>
-        </div>
-      </section>
-
-      {/* Read data */}
-      <section style={{ marginBottom: "1.5rem" }}>
-        <h3>On-chain Info</h3>
-        <p>
-          <strong>Contract Address:</strong> {CONTRACT_ADDRESS}
-        </p>
-        <p>
-          <strong>Current Balance:</strong> {balance} ETH
-        </p>
-        <p>
-          <strong>Unlock Time:</strong> {formattedUnlockTime}
-        </p>
-        <button onClick={refreshOnChainData}>Refresh</button>
-      </section>
-
-      {/* Deposit */}
-      <section style={{ marginBottom: "1.5rem" }}>
-        <h3>Deposit</h3>
-        <form onSubmit={handleDeposit}>
-          <input
-            type="number"
-            step="0.0001"
-            placeholder="Amount in ETH"
-            value={depositAmount}
-            onChange={(e) => setDepositAmount(e.target.value)}
-          />
-          <button type="submit">Deposit</button>
-        </form>
-      </section>
-
-      {/* Withdraw */}
-      <section style={{ marginBottom: "1.5rem" }}>
-        <h3>Withdraw</h3>
-        <form onSubmit={handleWithdraw}>
-          <input
-            type="number"
-            step="0.0001"
-            placeholder="Amount in ETH"
-            value={withdrawAmount}
-            onChange={(e) => setWithdrawAmount(e.target.value)}
-          />
-          <button type="submit">Withdraw</button>
-        </form>
-      </section>
-
-      {/* NEW: Extend Lock */}
-      <section style={{ marginBottom: "1.5rem" }}>
-        <h3>Extend Lock</h3>
-        <form onSubmit={handleExtendLock}>
-          <input
-            type="number"
-            min="0"
-            step="1"
-            placeholder="Duration"
-            value={lockDurationValue}
-            onChange={(e) => setLockDurationValue(e.target.value)}
-            style={{ marginRight: "0.5rem" }}
-          />
-          <select
-            value={lockDurationUnit}
-            onChange={(e) => setLockDurationUnit(e.target.value)}
-            style={{ marginRight: "0.5rem" }}
+      <div
+        style={{
+          maxWidth: "960px",
+          margin: "0 auto",
+          backgroundColor: "#f9fafb",
+          borderRadius: "16px",
+          padding: "2rem 1.75rem 2.5rem",
+          boxShadow: "0 20px 45px rgba(15,23,42,0.6)",
+          border: "1px solid rgba(148,163,184,0.4)",
+        }}
+      >
+        {/* Header */}
+        <header
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem",
+            marginBottom: "1rem",
+          }}
+        >
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "999px",
+              background: "#e0f2fe",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "1.4rem",
+            }}
           >
-            <option value="seconds">seconds</option>
-            <option value="minutes">minutes</option>
-            <option value="hours">hours</option>
-            <option value="days">days</option>
-          </select>
-          <button type="submit">Extend Lock</button>
-        </form>
-        <p style={{ fontSize: "0.9rem", marginTop: "0.5rem" }}>
-          This will lock funds until <strong>now + duration</strong>.  
-          It always pushes the unlock time further into the future; it never shortens it.
-        </p>
-      </section>
-
-      {/* Status + tx info */}
-      <section>
-        <h3>Status / Result</h3>
-        <p>{status}</p>
-        {lastTxHash && (
-          <p>
-            Last Tx:{" "}
-            <a
-              href={`https://sepolia.etherscan.io/tx/${lastTxHash}`}
-              target="_blank"
-              rel="noreferrer"
+            👜
+          </div>
+          <div>
+            <h1
+              style={{
+                fontSize: "1.6rem",
+                margin: 0,
+                color: "#0f172a",
+                fontWeight: 700,
+              }}
             >
-              {lastTxHash.slice(0, 10)}...
-            </a>
+              MetaLocked: A Time-Locked Savings Wallet
+            </h1>
+            <p
+              style={{
+                margin: "0.25rem 0 0",
+                color: "#4b5563",
+                fontSize: "0.95rem",
+              }}
+            >
+              A Sepolia-based smart contract that helps you lock your ETH for a chosen period,
+              so you don&apos;t touch your savings before you planned.
+            </p>
+          </div>
+        </header>
+
+        {/* Intro / How it works */}
+        <section style={cardStyle}>
+          <h2 style={{ marginTop: 0, fontSize: "1.15rem" }}>What is MetaLocked?</h2>
+          <p style={{ margin: "0 0 0.75rem", color: "#4b5563", fontSize: "0.95rem" }}>
+            MetaLocked is a simple time-locked savings wallet built on the Ethereum Sepolia
+            testnet. When you deposit ETH into this contract, those funds stay locked until the
+            unlock time is reached. Withdrawals are enforced on-chain by the smart contract, so
+            even if you&apos;re tempted, you can&apos;t withdraw before the lock expires.
           </p>
-        )}
-      </section>
+          <h3 style={{ fontSize: "1.02rem", marginTop: "1rem" }}>How to use MetaLocked</h3>
+          <ol
+            style={{
+              paddingLeft: "1.25rem",
+              margin: "0.4rem 0 0.25rem",
+              color: "#4b5563",
+              fontSize: "0.95rem",
+            }}
+          >
+            <li>Install MetaMask and switch your network to <strong>Sepolia</strong>.</li>
+            <li>
+              Click <strong>Connect Wallet</strong> below to connect your account and confirm
+              the network.
+            </li>
+            <li>
+              Use <strong>Deposit</strong> to send ETH into the contract. The balance and unlock
+              time are shown in the On-chain Info panel.
+            </li>
+            <li>
+              Use <strong>Extend Lock</strong> to push the unlock time further into the future
+              (e.g., +7 days from now).
+            </li>
+            <li>
+              After the unlock time passes, use <strong>Withdraw</strong> to move your ETH back
+              to your wallet. Early withdrawal attempts will fail on-chain.
+            </li>
+          </ol>
+          <p style={{ margin: "0.4rem 0 0", color: "#6b7280", fontSize: "0.9rem" }}>
+            Only the contract owner (the address that deployed MetaLocked) can extend the lock
+            and withdraw funds. Anyone can verify all actions on Etherscan.
+          </p>
+        </section>
+
+        {/* Main layout: left column (wallet/info), right column (actions) */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1.1fr) minmax(0, 1.1fr)",
+            gap: "1.5rem",
+          }}
+        >
+          {/* Left column */}
+          <div>
+            {/* Connect Wallet */}
+            <section style={cardStyle}>
+              <h2 style={{ marginTop: 0, fontSize: "1.1rem" }}>Wallet Connection</h2>
+              <p style={{ color: "#4b5563", fontSize: "0.95rem", marginBottom: "0.75rem" }}>
+                Connect your MetaMask wallet on the Sepolia network to start interacting
+                with MetaLocked.
+              </p>
+              <button style={buttonPrimary} onClick={connectWallet}>
+                Connect Wallet
+              </button>
+              <div style={{ marginTop: "0.75rem", fontSize: "0.92rem" }}>
+                <p style={{ margin: "0.15rem 0" }}>
+                  <span style={{ fontWeight: 600 }}>Wallet:</span>{" "}
+                  <span style={{ color: "#111827" }}>
+                    {walletAddress || "Not connected"}
+                  </span>
+                </p>
+                <p style={{ margin: "0.15rem 0" }}>
+                  <span style={{ fontWeight: 600 }}>Network:</span>{" "}
+                  <span style={{ color: "#111827" }}>
+                    {network || "Unknown"}
+                  </span>
+                </p>
+              </div>
+            </section>
+
+            {/* On-chain Info */}
+            <section style={cardStyle}>
+              <h2 style={{ marginTop: 0, fontSize: "1.1rem" }}>On-chain Info</h2>
+              <p style={{ margin: "0.2rem 0", fontSize: "0.9rem", color: "#4b5563" }}>
+                <span style={{ fontWeight: 600 }}>Contract Address:</span>
+                <br />
+                <span
+                  style={{
+                    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  {CONTRACT_ADDRESS}
+                </span>
+              </p>
+              <p style={{ margin: "0.2rem 0", fontSize: "0.95rem" }}>
+                <span style={{ fontWeight: 600 }}>Current Balance:</span> {balance} ETH
+              </p>
+              <p style={{ margin: "0.2rem 0", fontSize: "0.95rem" }}>
+                <span style={{ fontWeight: 600 }}>Unlock Time:</span> {formattedUnlockTime}
+              </p>
+              <button style={buttonSecondary} onClick={refreshOnChainData}>
+                Refresh
+              </button>
+            </section>
+          </div>
+
+          {/* Right column */}
+          <div>
+            {/* Deposit */}
+            <section style={cardStyle}>
+              <h2 style={{ marginTop: 0, fontSize: "1.1rem" }}>Deposit</h2>
+              <p style={{ color: "#4b5563", fontSize: "0.95rem", marginBottom: "0.75rem" }}>
+                Send ETH into MetaLocked. These funds will remain in the contract until the
+                unlock time has passed.
+              </p>
+              <form onSubmit={handleDeposit} style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                <div style={{ flexGrow: 1, minWidth: "140px" }}>
+                  <label style={labelStyle}>Amount (ETH)</label>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    placeholder="e.g. 0.01"
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(e.target.value)}
+                    style={{ ...inputStyle, width: "100%" }}
+                  />
+                </div>
+                <div style={{ alignSelf: "flex-end" }}>
+                  <button type="submit" style={buttonPrimary}>
+                    Deposit
+                  </button>
+                </div>
+              </form>
+            </section>
+
+            {/* Withdraw */}
+            <section style={cardStyle}>
+              <h2 style={{ marginTop: 0, fontSize: "1.1rem" }}>Withdraw</h2>
+              <p style={{ color: "#4b5563", fontSize: "0.95rem", marginBottom: "0.75rem" }}>
+                Once the unlock time has passed, you can withdraw ETH back to the owner wallet.
+                Attempts to withdraw too early will fail on-chain.
+              </p>
+              <form onSubmit={handleWithdraw} style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                <div style={{ flexGrow: 1, minWidth: "140px" }}>
+                  <label style={labelStyle}>Amount (ETH)</label>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    placeholder="e.g. 0.01"
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    style={{ ...inputStyle, width: "100%" }}
+                  />
+                </div>
+                <div style={{ alignSelf: "flex-end" }}>
+                  <button type="submit" style={buttonSecondary}>
+                    Withdraw
+                  </button>
+                </div>
+              </form>
+            </section>
+
+            {/* Extend Lock */}
+            <section style={cardStyle}>
+              <h2 style={{ marginTop: 0, fontSize: "1.1rem" }}>Extend Lock</h2>
+              <p style={{ color: "#4b5563", fontSize: "0.95rem", marginBottom: "0.75rem" }}>
+                Push the unlock time further into the future, based on the duration you choose
+                from now. This never shortens the current lock; it only extends it.
+              </p>
+              <form
+                onSubmit={handleExtendLock}
+                style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}
+              >
+                <div style={{ minWidth: "90px" }}>
+                  <label style={labelStyle}>Duration</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="e.g. 7"
+                    value={lockDurationValue}
+                    onChange={(e) => setLockDurationValue(e.target.value)}
+                    style={{ ...inputStyle, width: "100%" }}
+                  />
+                </div>
+                <div style={{ minWidth: "110px" }}>
+                  <label style={labelStyle}>Unit</label>
+                  <select
+                    value={lockDurationUnit}
+                    onChange={(e) => setLockDurationUnit(e.target.value)}
+                    style={{
+                      ...inputStyle,
+                      width: "100%",
+                      paddingRight: "1.75rem",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <option value="seconds">seconds</option>
+                    <option value="minutes">minutes</option>
+                    <option value="hours">hours</option>
+                    <option value="days">days</option>
+                  </select>
+                </div>
+                <div style={{ alignSelf: "flex-end" }}>
+                  <button type="submit" style={buttonPrimary}>
+                    Extend Lock
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+        </div>
+
+        {/* Status + tx info */}
+        <section style={{ ...cardStyle, marginBottom: 0 }}>
+          <h2 style={{ marginTop: 0, fontSize: "1.1rem" }}>Status & Transaction Info</h2>
+          <p style={{ margin: "0.25rem 0 0.75rem", color: "#374151", fontSize: "0.95rem" }}>
+            {status || "No recent actions yet. Use the controls above to interact with MetaLocked."}
+          </p>
+          {lastTxHash && (
+            <p style={{ margin: 0, fontSize: "0.9rem" }}>
+              <span style={{ fontWeight: 600 }}>Last Transaction:</span>{" "}
+              <a
+                href={`https://sepolia.etherscan.io/tx/${lastTxHash}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: "#2563eb", textDecoration: "none" }}
+              >
+                {lastTxHash.slice(0, 10)}...
+              </a>
+            </p>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
