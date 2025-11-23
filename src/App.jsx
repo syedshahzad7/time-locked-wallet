@@ -381,7 +381,7 @@ function App() {
             </li>
             <li>
               Other users can deposit ETH and monitor the contract, but only the
-              owner can actually move funds out. If friends deposit, the owner
+              owner can actually move funds out. If a non-owner deposit, the owner
               must withdraw and send ETH back to them from their wallet.
             </li>
           </ol>
