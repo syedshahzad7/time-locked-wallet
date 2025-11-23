@@ -16,7 +16,7 @@ function App() {
   const [status, setStatus] = useState("");
   const [lastTxHash, setLastTxHash] = useState("");
 
-  // NEW: lock UI state
+  // lock UI state
   const [lockDurationValue, setLockDurationValue] = useState("");
   const [lockDurationUnit, setLockDurationUnit] = useState("minutes");
 
@@ -102,7 +102,7 @@ function App() {
     }
   };
 
-  // ---- Write: withdraw ----
+  // ---- Write: withdraw (owner-only in contract) ----
   const handleWithdraw = async (e) => {
     e.preventDefault();
     try {
@@ -127,7 +127,7 @@ function App() {
     }
   };
 
-  // ---- NEW: Write: extend lock ----
+  // ---- Write: extend lock (owner-only in contract) ----
   const handleExtendLock = async (e) => {
     e.preventDefault();
     try {
@@ -218,7 +218,8 @@ function App() {
     <div
       style={{
         minHeight: "100vh",
-        background: "radial-gradient(circle at top, #1d4ed8 0, #020617 45%, #020617 100%)",
+        background:
+          "radial-gradient(circle at top, #1d4ed8 0, #020617 45%, #020617 100%)",
         padding: "2rem 1rem",
         display: "flex",
         justifyContent: "center",
@@ -370,12 +371,18 @@ function App() {
             </li>
             <li>
               Use <strong>Extend Lock</strong> to push the unlock time further
-              into the future (e.g., +7 days from now).
+              into the future (e.g., +7 days from now). This transaction can
+              only be sent by the <strong>contract owner</strong>.
             </li>
             <li>
               After the unlock time passes, use <strong>Withdraw</strong> to
-              move your ETH back to your wallet. Early withdrawal attempts will
-              fail on-chain.
+              move ETH from the contract back to the owner&apos;s wallet. Early
+              withdrawal attempts by the owner will fail on-chain.
+            </li>
+            <li>
+              Other users can deposit ETH and monitor the contract, but only the
+              owner can actually move funds out. If friends deposit, the owner
+              must withdraw and send ETH back to them from their wallet.
             </li>
           </ol>
           <p
@@ -385,9 +392,10 @@ function App() {
               color: "#9ca3af",
             }}
           >
-            Only the contract owner (the address that deployed MetaLocked) can
-            extend the lock and withdraw funds. Anyone can verify all actions on
-            Etherscan.
+            This owner-only design reduces the attack surface and makes the
+            vault easier to reason about: one address controls withdrawals and
+            lock extensions, while everyone can verify the rules and
+            transactions publicly on Etherscan.
           </p>
         </section>
 
@@ -434,8 +442,7 @@ function App() {
               <button
                 onClick={connectWallet}
                 style={{
-                  background:
-                    "linear-gradient(to right, #4f46e5, #0ea5e9)",
+                  background: "linear-gradient(to right, #4f46e5, #0ea5e9)",
                   border: "none",
                   color: "white",
                   padding: "0.55rem 1.2rem",
@@ -582,8 +589,7 @@ function App() {
                 <button
                   type="submit"
                   style={{
-                    background:
-                      "linear-gradient(to right, #22c55e, #16a34a)",
+                    background: "linear-gradient(to right, #22c55e, #16a34a)",
                     border: "none",
                     color: "white",
                     padding: "0.5rem 1.1rem",
@@ -626,8 +632,10 @@ function App() {
                   fontSize: "0.9rem",
                 }}
               >
-                After the unlock time, withdraw your ETH back to your wallet.
-                Early withdrawals will revert on-chain.
+                After the unlock time, the <strong>contract owner</strong> can
+                withdraw ETH back to their wallet. If someone else deposited
+                funds, the owner must send ETH back to them with a regular
+                wallet transfer.
               </p>
               <form
                 onSubmit={handleWithdraw}
@@ -652,8 +660,7 @@ function App() {
                 <button
                   type="submit"
                   style={{
-                    background:
-                      "linear-gradient(to right, #e11d48, #fb923c)",
+                    background: "linear-gradient(to right, #e11d48, #fb923c)",
                     border: "none",
                     color: "white",
                     padding: "0.5rem 1.1rem",
@@ -667,6 +674,17 @@ function App() {
                   Withdraw
                 </button>
               </form>
+              <p
+                style={{
+                  fontSize: "0.82rem",
+                  marginTop: "0.6rem",
+                  color: "#9ca3af",
+                }}
+              >
+                If a non-owner tries to call <code>withdraw</code>, the
+                transaction will revert because of the on-chain{" "}
+                <code>onlyOwner</code> access control in the smart contract.
+              </p>
             </section>
 
             {/* Extend Lock */}
@@ -698,7 +716,8 @@ function App() {
               >
                 Choose how much longer to keep your savings locked. The new
                 unlock time will always be in the future compared to the current
-                one.
+                one. Only the <strong>contract owner</strong> can send this
+                transaction.
               </p>
               <form
                 onSubmit={handleExtendLock}
@@ -742,8 +761,7 @@ function App() {
                 <button
                   type="submit"
                   style={{
-                    background:
-                      "linear-gradient(to right, #0ea5e9, #22c55e)",
+                    background: "linear-gradient(to right, #0ea5e9, #22c55e)",
                     border: "none",
                     color: "white",
                     padding: "0.5rem 1.1rem",
@@ -764,9 +782,11 @@ function App() {
                   color: "#9ca3af",
                 }}
               >
-                MetaLocked computes{" "}
-                <strong>now + duration</strong> and only pushes the unlock time
-                forward, never backward.
+                MetaLocked computes <strong>now + duration</strong> and only
+                pushes the unlock time forward, never backward. Non-owners who
+                attempt to call <code>extendLock</code> will see their
+                transaction reverted by the contract&apos;s{" "}
+                <code>onlyOwner</code> modifier.
               </p>
             </section>
           </div>
